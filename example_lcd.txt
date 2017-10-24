@@ -1,0 +1,207 @@
+/* LCD display with 4 DataPins
+* --------
+*
+* This is a example in how to use an LCD screen
+* configured with data transfers over 2 x 4 bits. The example
+* based on the "LCD Hola example" by DojoDave.
+*  
+* There are the following pins to be considered:
+*
+* - DI, RW, DB0..DB3, Enable (7 in total)
+*
+* the pinout for LCD displays is standard and there is plenty
+* of documentation to be found on the internet.
+*
+* (cleft) 2006 Tomek for K3 and fh-potsdam
+*
+*/
+int led = 13;
+int DI = 12;
+int RW = 11;
+int DB[] = { 7, 8, 9, 10};
+int Enable = 6;
+int count = 0;
+
+void LcdCommandWrite(int value) {
+int i = 0;
+int value1 = 0;
+value1 = value;
+
+value1 >>= 4;               //send the first 4 databits (from 8) + RW and DI
+for (i=DB[0]; i <= DI; i++) {
+  digitalWrite(i,value1 & 01);
+  value1 >>= 1;
+}
+digitalWrite(Enable,LOW);   // send a pulse to enable
+delayMicroseconds(1);
+digitalWrite(Enable,HIGH);
+delayMicroseconds(1);
+digitalWrite(Enable,LOW);
+delayMicroseconds(1); //    pause 1 ms according to datasheet
+delay(1);
+
+for (i=DB[0]; i <= DB[3]; i++) {  // secound part of the secound 4 bits (from 8)
+  digitalWrite(i,value & 01);
+  value >>= 1; 
+}
+value >>= 4;                 // send the RW and DI of the secound 4 bits(from 8) 
+for (i=RW; i <= DI; i++) {
+  digitalWrite(i,value & 01);
+  value >>= 1;
+}
+digitalWrite(Enable,LOW); // send a pulse to enable
+delayMicroseconds(1);
+digitalWrite(Enable,HIGH);
+delayMicroseconds(1);
+digitalWrite(Enable,LOW);
+delayMicroseconds(1); // pause 1 ms according to datasheet
+}
+
+void LcdDataWrite(int value) {
+int i = 0;
+int value1 = 0;
+digitalWrite(DI, HIGH);
+digitalWrite(RW, LOW);
+value1 =value;
+value1 >>= 4;                     //send the first 4 databits (from 8) 
+for (i=DB[0]; i <= DB[3]; i++) {
+  digitalWrite(i,value1 & 01);
+  value1 >>= 1;
+}
+digitalWrite(Enable,LOW);   // send a pulse to enable
+delayMicroseconds(1);
+digitalWrite(Enable,HIGH);
+delayMicroseconds(1);
+digitalWrite(Enable,LOW);
+delayMicroseconds(1);   // pause 1 ms according to datasheet
+delay(1);
+digitalWrite(DI, HIGH);
+digitalWrite(RW, LOW);
+for (i=DB[0]; i <= DB[3]; i++) {
+  digitalWrite(i,value & 01);
+  value >>= 1;
+}
+digitalWrite(Enable,LOW);   // send a pulse to enable
+delayMicroseconds(1);
+digitalWrite(Enable,HIGH);
+delayMicroseconds(1);
+digitalWrite(Enable,LOW);
+delayMicroseconds(1); // pause 1 ms according to datasheet
+}
+
+// this funktion help us to write number over 9, easyely in the lcd display
+
+void LcdNumberWrite(int nr) {
+
+int n1 = 0;
+int n2 = 0;
+
+n1 = n2 = nr;
+
+n1 = n1 / 100;
+LcdCommandWrite(560 + n1);  //512 used to wirte data (see commands for character modul)
+n2 = (n2 - n1 * 100) / 10;
+LcdCommandWrite(560 + n2);  //512 used to wirte data (see commands for character modul)
+nr = nr - n1 *100 - n2 * 10;
+LcdCommandWrite(560 + nr);  //512 used to wirte data (see commands for character modul)
+}
+
+void setup (void) {
+
+int i = 0;
+for (i=Enable; i <= DI; i++) {
+pinMode(i,OUTPUT);
+}
+delay(100);
+// initiatize lcd after a short pause
+// needed by the LCDs controller
+
+///////////////////////////////////////////////////// 4 pin initialization
+LcdCommandWrite(0x03); // function set:
+// 4 pin initialization
+delay(64);
+LcdCommandWrite(0x03); // function set:
+// 4 pin initialization
+delay(50);
+LcdCommandWrite(0x03); // function set:
+// 4 pin initialization
+delay(50);
+LcdCommandWrite(0x02); // function set:
+// 4 pin initialization
+delay(50);
+LcdCommandWrite(0x2C); // function set:
+// 4-bit interface, 1 display lines, 5x7 font
+///////////////////////////////////////////////////// end of 4 pin initialization 
+
+delay(20);
+LcdCommandWrite(0x06); // entry mode set:
+// increment automatically, no display shift
+delay(20);
+LcdCommandWrite(0x0E); // display control:
+// turn display on, cursor on, no blinking
+delay(20);
+LcdCommandWrite(0x01); // clear display, set cursor position to zero
+delay(100);
+
+LcdCommandWrite(0x80); // display control:
+delay(20);
+
+
+//////// unter this line are the special stuff you don't need for a initialitzation
+
+LcdCommandWrite(0x0F); //  cursor blink
+delay(10);
+}
+
+void loop (void) {
+
+//>>>>>>>>>>>>>>>>>>>>>>>>>>>possible commands for the Lcd Display>>>>>>><< able to use for LcdDisplays with 4 or with 8 DataPins
+
+//LcdCommandWrite(0x01); // clear display, set the cursor to home position
+//LcdCommandWrite(0x02); // set cursor position to zero
+//LcdCommandWrite(0x0A); // set the display off 
+//LcdCommandWrite(0x0E); // set the display on and with out cursor blink
+//LcdCommandWrite(0x0F); // set the display on and  with cursor blink
+//LcdCommandWrite(0x0F); //  cursor blink
+//LcdCommandWrite(0x0E); //  cursor not blink
+//LcdCommandWrite(0x18); // shift display and cursor to the left
+//LcdCommandWrite(0x1c); // shift display and cursor to the right
+//LcdCommandWrite(0x14); // shift cursor to the right
+//LcdCommandWrite(0x10); // shift cursor to the left
+
+//>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> example <<<<<<<<<
+
+LcdCommandWrite(0x02); // set cursor position to zero
+delay(10);
+
+// Write the message
+
+//like this
+LcdDataWrite('L');
+LcdDataWrite('c');
+LcdDataWrite('d');
+
+//or like this
+for ( count = 0; count<=7; count++) {
+  int wrote [] = { 'D', 'i', 's', 'p', 'l', 'a', 'y',  ' ',};
+LcdDataWrite(wrote[count]);
+} 
+
+LcdDataWrite('w');
+LcdDataWrite('i');
+LcdDataWrite('t');
+LcdDataWrite('h');
+LcdDataWrite(' ');
+
+// and Number over 9 easyely like this
+LcdNumberWrite(4);
+
+LcdDataWrite('P');
+LcdDataWrite('i');
+LcdDataWrite('n');
+LcdDataWrite('s');
+
+
+
+delay(3000);
+}
